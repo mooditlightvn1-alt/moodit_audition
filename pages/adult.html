@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>개인정보 수집·이용 동의</title>
+
+  <!-- 공통 CSS -->
+  <link rel="stylesheet" href="../assets/style/common.css" />
+
+  <!-- API / CONFIG -->
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/config.js"></script>
+
+  <style>
+    .info-box {
+      padding: 15px;
+      border-radius: 10px;
+      background: #eef7ff;
+      border: 1px solid #b7d7ff;
+      margin-bottom: 20px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .terms-scroll {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      font-size: 14px;
+      line-height: 1.65;
+      margin-top: 12px;
+    }
+    #btnNext {
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      background: #2e8b57;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      opacity: 0.4;
+    }
+    #btnNext.active {
+      opacity: 1;
+    }
+    #errorBox {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="logo-box">
+    <img id="logoImg" src="">
+  </div>
+
+  <h2 class="title">개인정보 수집·이용 동의</h2>
+
+  <div class="info-box">
+    귀하는 <b>만 16세 이상</b>으로 확인되었습니다.<br>
+    아래 개인정보 처리 내용을 확인 후 동의해 주세요.
+  </div>
+
+  <!-- 약관 -->
+  <div class="terms-scroll">
+    <p><strong>1. 수집 목적</strong><br>
+      오디션 접수 및 프로필 생성, 한국 엔터테인먼트사와의 연계,<br>
+      서비스 품질 개선, 고객 응대, 법적 기록 보관.
+    </p>
+
+    <p><strong>2. 수집 항목</strong><br>
+      나이, 생년월일, 키, 몸무게,<br>
+      촬영 사진, 접수번호, SNS URL 등.
+    </p>
+
+    <p><strong>3. 보관 기간</strong><br>
+      24개월간 보관하며, 필요한 경우 연장될 수 있습니다.
+    </p>
+
+    <p><strong>4. 제공 대상</strong><br>
+      한국 엔터테인먼트사,<br>
+      기술 제공 업체,<br>
+      법령에 따른 정부 기관.
+    </p>
+
+    <p><strong>5. 회사명</strong><br>
+      CÔNG TY TNHH MOODIT VIETNAM
+    </p>
+  </div>
+
+  <!-- 체크박스 -->
+  <label style="margin-top:20px; display:block;">
+    <input type="checkbox" id="agreeTerms" />
+    개인정보 수집 및 이용에 동의합니다 (필수)
+  </label>
+
+  <div id="errorBox"></div>
+
+  <button id="btnNext">동의 후 제출하기</button>
+
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const crypto = params.get("crypto");
+
+if (!crypto) {
+  document.getElementById("errorBox").innerText = "잘못된 접근입니다.";
+}
+
+/* 로고 로딩 */
+loadSettings().then(cfg => {
+  document.getElementById("logoImg").src = cfg.logoUrl;
+});
+
+/* 체크박스 활성화 */
+agreeTerms.onchange = () => {
+  if (agreeTerms.checked) {
+    btnNext.classList.add("active");
+    btnNext.style.opacity = 1;
+  } else {
+    btnNext.classList.remove("active");
+    btnNext.style.opacity = 0.4;
+  }
+};
+
+/* 제출 */
+btnNext.onclick = async () => {
+  if (!agreeTerms.checked) {
+    errorBox.innerText = "필수 항목에 동의해야 합니다.";
+    return;
+  }
+
+  btnNext.innerText = "제출 중...";
+  btnNext.disabled = true;
+
+  const res = await api.post("/adult-consent", { crypto });
+
+  if (!res.success) {
+    errorBox.innerText = "제출 오류. 다시 시도하세요.";
+    btnNext.disabled = false;
+    btnNext.innerText = "동의 후 제출하기";
+    return;
+  }
+
+  /* 완료 */
+  location.href = `success.html?crypto=${encodeURIComponent(crypto)}`;
+};
+</script>
+
+</body>
+</html>
