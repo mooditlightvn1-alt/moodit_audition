@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>보호자 인증</title>
+
+  <!-- 공통 스타일 -->
+  <link rel="stylesheet" href="../assets/style/common.css" />
+
+  <!-- API / CONFIG -->
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/config.js"></script>
+
+  <style>
+    .info-box {
+      padding: 15px;
+      border-radius: 10px;
+      background: #fff8e6;
+      border: 1px solid #f0d79a;
+      margin-bottom: 18px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    #btnSend, #btnVerify {
+      width: 100%;
+      margin-top: 12px;
+    }
+    #errorBox {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="logo-box">
+    <img id="logoImg" src="" />
+  </div>
+
+  <h2 class="title">보호자 이메일 인증</h2>
+
+  <div class="info-box">
+    미성년자의 경우, 보호자(부모)의 이메일 인증이 필요합니다.<br>
+    인증 완료 후 다음 단계로 진행됩니다.
+  </div>
+
+  <!-- 보호자 이메일 입력 -->
+  <label>보호자 이메일</label>
+  <input type="email" id="parentEmail" placeholder="example@gmail.com" />
+
+  <button id="btnSend">인증 코드 보내기</button>
+
+  <!-- 인증 코드 입력 -->
+  <label style="margin-top:15px;">인증 코드</label>
+  <input type="text" id="verifyCode" placeholder="6자리 코드 입력" />
+
+  <button id="btnVerify">인증 확인</button>
+
+  <div id="errorBox"></div>
+
+</div>
+
+<script>
+let crypto = "";
+const params = new URLSearchParams(location.search);
+crypto = params.get("crypto");
+
+if (!crypto) {
+  document.getElementById("errorBox").innerText = "잘못된 접근입니다.";
+}
+
+/* 설정 로딩: 로고 이미지 */
+loadSettings().then(cfg => {
+  document.getElementById("logoImg").src = cfg.logoUrl;
+});
+
+/* 1. 보호자 이메일로 인증 코드 발송 */
+document.getElementById("btnSend").onclick = async () => {
+  const email = parentEmail.value.trim();
+  const err = document.getElementById("errorBox");
+
+  if (!email) {
+    err.innerText = "이메일을 입력해 주세요.";
+    return;
+  }
+
+  err.innerText = "메일 발송 중...";
+
+  const res = await api.post("/send-parent-code", {
+    crypto: crypto,
+    parentEmail: email
+  });
+
+  if (!res.success) {
+    err.innerText = "메일 발송 실패. 다시 시도해 주세요.";
+  } else {
+    err.innerText = "인증 코드가 전송되었습니다.";
+  }
+};
+
+/* 2. 인증 코드 검증 */
+document.getElementById("btnVerify").onclick = async () => {
+  const code = verifyCode.value.trim();
+  const err = document.getElementById("errorBox");
+
+  if (!code) {
+    err.innerText = "인증 코드를 입력해 주세요.";
+    return;
+  }
+
+  const res = await api.post("/verify-parent", {
+    crypto: crypto,
+    code: code
+  });
+
+  if (!res.success) {
+    err.innerText = "인증 실패. 다시 확인해 주세요.";
+    return;
+  }
+
+  /* 성공 → success.html 이동 */
+  location.href = `success.html?crypto=${encodeURIComponent(crypto)}`;
+};
+</script>
+
+</body>
+</html>
