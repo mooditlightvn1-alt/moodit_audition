@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>MOODIT Audition Apply</title>
+
+  <!-- 공통 스타일 -->
+  <link rel="stylesheet" href="../assets/style/common.css" />
+
+  <!-- Google Apps Script API Proxy -->
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/util.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="logo-box">
+    <img id="logoImg" src="" />
+  </div>
+
+  <h2 class="title">오디션 지원하기</h2>
+
+  <div class="input-group">
+    <label>키 (cm)</label>
+    <input type="number" id="height" />
+  </div>
+
+  <div class="input-group">
+    <label>몸무게 (kg)</label>
+    <input type="number" id="weight" />
+  </div>
+
+  <div class="input-group">
+    <label>나이</label>
+    <input type="number" id="age" />
+  </div>
+
+  <button id="btnNext">다음</button>
+  <div id="errorBox" class="error-box"></div>
+</div>
+
+<script>
+/* 초기 설정: 시트에서 환경값 로딩 */
+loadSettings().then(cfg => {
+  document.getElementById("logoImg").src = cfg.logoUrl;
+});
+
+/* 버튼 클릭 */
+document.getElementById("btnNext").onclick = async () => {
+  const h = height.value.trim();
+  const w = weight.value.trim();
+  const a = age.value.trim();
+  const err = document.getElementById("errorBox");
+
+  if (!h || !w || !a) {
+    err.innerText = "모든 항목을 입력해 주세요.";
+    return;
+  }
+
+  err.innerText = "";
+
+  const res = await api.post("/apply", {
+    height: h,
+    weight: w,
+    age: a
+  });
+
+  if (!res.success) {
+    err.innerText = "오류가 발생했습니다.";
+    return;
+  }
+
+  /* 미성년자 여부 처리 */
+  if (res.isMinor) {
+    location.href = `parent.html?crypto=${encodeURIComponent(res.crypto)}`;
+  } else {
+    location.href = `adult.html?crypto=${encodeURIComponent(res.crypto)}`;
+  }
+};
+</script>
+
+</body>
+</html>
